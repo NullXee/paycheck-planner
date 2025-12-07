@@ -7,15 +7,19 @@
 
 import SwiftUI
 
-// Sets the base value to 0 of each Incime and Expense.
-var paycheck: Double = 0  // Total monthly income.
-var expenseTotal: Double = 0  // How much the expense is.
-var expenseName: String = ""  // Holds the name of the expense.
-var expenses: [Any] = []  // Array for all expenses text and total. [Any] will allow both strings and doubles in it.
-
-// Main content \\
+// Out of scope \\
 
 struct ContentView: View {
+
+    // In scope \\
+    @State private var paycheck: Double = 0  // Add this
+    @State private var showingPaycheckSheet = false
+    @State private var paycheckInput = ""
+    @State private var expensesTotal: Double = 0
+    @State private var expensesName: String = ""
+    @State private var expenses: [Any] = []
+    @State private var isOverOrUnder: Double = 0
+
     var body: some View {
 
         // Label/Header
@@ -28,15 +32,26 @@ struct ContentView: View {
 
         // Paycheck area
         HStack {
-            Text("Paycheck: $1420.69")
-            //            Text("Paycheck: \(paycheck)")
+            VStack(alignment: .leading) {
+                // Returns paycheck
+                Text("Paycheck: \(paycheck)")
+                    .font(.system(size: 18))
+                // Returns whats left or is negative
+                Text("Over / Under: \(isOverOrUnder)")
+                    .font(.system(size: 14))
+
+            }
             Spacer()
-            Button("Add Paycheck") {
+
+            Button(action: {
+                // Code to execute when button is pressed.
+                showingPaycheckSheet = true
+            }) {
+                Text("Add Paycheck")
             }
             .buttonStyle(.bordered)
             .background(Color.blue)
             .foregroundColor(Color.white)
-            .shadow(color: Color.black.opacity(0.2), radius: 5)
             .cornerRadius(15)
         }
         .padding()
@@ -60,6 +75,12 @@ struct ContentView: View {
             .foregroundColor(Color.white)
             .shadow(color: Color.black.opacity(0.2), radius: 5)
             .cornerRadius(15)
+            .sheet(isPresented: $showingPaycheckSheet) {
+                PaycheckInputSheet(
+                    paycheck: $paycheck,
+                    isPresented: $showingPaycheckSheet
+                )
+            }
         }
         .padding(20)
     }
@@ -67,4 +88,43 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+}
+
+// Add this new view outside of ContentView
+struct PaycheckInputSheet: View {
+    @Binding var paycheck: Double
+    @Binding var isPresented: Bool
+    @State private var inputText = ""
+    @FocusState private var isInputFocused: Bool
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section("Enter Paycheck Amount") {
+                    TextField("Amount", text: $inputText)
+                        .keyboardType(.decimalPad)
+                        .focused($isInputFocused)
+                }
+            }
+            .navigationTitle("Add Paycheck")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        isPresented = false
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        if let amount = Double(inputText) {
+                            paycheck = amount
+                        }
+                        isPresented = false
+                    }
+                }
+            }
+            .onAppear {
+                isInputFocused = true
+            }
+        }
+    }
 }
