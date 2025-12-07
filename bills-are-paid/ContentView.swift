@@ -8,8 +8,8 @@
 import SwiftUI
 
 // Sets the base value to 0 of each Incime and Expense.
-var monthlyIncome: Double = 0  // Total monthly income.
-var expenseTotal: Double = 0 // How much the expense is.
+var paycheck: Double = 0  // Total monthly income.
+var expenseTotal: Double = 0  // How much the expense is.
 var expenseName: String = ""  // Holds the name of the expense.
 var expenses: [Any] = []  // Array for all expenses text and total. [Any] will allow both strings and doubles in it.
 
@@ -20,28 +20,48 @@ struct ContentView: View {
 
         // Label/Header
         ZStack {
-            Label("Bills are paid", systemImage: "creditcard.circle")
+            Label("Paycheck planner", systemImage: "creditcard.circle")
                 .font(Font.largeTitle)
-                .bold(true)
                 .foregroundColor(Color.blue)
         }
         .padding()
 
-        // Add buttons
-        // @State var set to false
+        // Paycheck area
         HStack {
-            Button(action: {
-                @State var showIncomeInput = false
-            }) {
-                Text("Add Income")
+            Text("Paycheck: $1420.69")
+            //            Text("Paycheck: \(paycheck)")
+            Spacer()
+            Button("Add Paycheck") {
             }
-            Button(action: {
-                @State var showExpenseInput = false
-            }) {
-                Text("Add Expense")
+            .buttonStyle(.bordered)
+            .background(Color.blue)
+            .foregroundColor(Color.white)
+            .shadow(color: Color.black.opacity(0.2), radius: 5)
+            .cornerRadius(15)
+        }
+        .padding()
 
+        Spacer()
+
+        List {
+            HStack {
+                Label("Expense:", systemImage: "dollarsign.bank.building")
+                Spacer()
+                Label("$0.00", systemImage: "dollarsign.circle")
             }
         }
+
+        // Add buttons
+        HStack {
+            Button("Add Expense") {
+            }
+            .buttonStyle(.bordered)
+            .background(Color.blue)
+            .foregroundColor(Color.white)
+            .shadow(color: Color.black.opacity(0.2), radius: 5)
+            .cornerRadius(15)
+        }
+        .padding(20)
     }
 }
 
