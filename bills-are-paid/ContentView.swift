@@ -22,67 +22,71 @@ struct ContentView: View {
 
     var body: some View {
 
-        // Label/Header
-        ZStack {
-            Label("Paycheck planner", systemImage: "creditcard.circle")
-                .font(Font.largeTitle)
-                .foregroundColor(Color.blue)
-        }
-        .padding()
-
-        // Paycheck area
-        HStack {
-            VStack(alignment: .leading) {
-                // Returns paycheck
-                Text("Paycheck: \(paycheck)")
-                    .font(.system(size: 18))
-                // Returns whats left or is negative
-                Text("Over / Under: \(isOverOrUnder)")
-                    .font(.system(size: 14))
-
+        VStack {
+            // Label/Header
+            ZStack {
+                Label("Paycheck planner", systemImage: "creditcard.circle")
+                    .font(Font.largeTitle)
+                    .foregroundColor(Color.blue)
             }
+            .padding()
+
+            // Paycheck area
+            HStack {
+                VStack(alignment: .leading) {
+                    // Returns paycheck
+                    Text("Paycheck: \(paycheck)")
+                        .font(.system(size: 18))
+                    // Returns whats left or is negative
+                    Text("Over / Under: \(isOverOrUnder)")
+                        .font(.system(size: 14))
+
+                }
+
+                Spacer()
+
+                Button(action: {
+                    // Code to execute when button is pressed.
+                    showingPaycheckSheet = true
+                }) {
+                    Text("Add Paycheck")
+                }
+                .buttonStyle(.bordered)
+                .background(Color.blue)
+                .foregroundColor(Color.white)
+                .cornerRadius(15)
+            }
+            .padding()
+            .glassEffect(in: .rect(cornerRadius: 18))
+
             Spacer()
 
-            Button(action: {
-                // Code to execute when button is pressed.
-                showingPaycheckSheet = true
-            }) {
-                Text("Add Paycheck")
+            List {
+                HStack {
+                    Label("Expense:", systemImage: "dollarsign.bank.building")
+                    Spacer()
+                    Label("$0.00", systemImage: "dollarsign.circle")
+                }
             }
-            .buttonStyle(.bordered)
-            .background(Color.blue)
-            .foregroundColor(Color.white)
-            .cornerRadius(15)
-        }
-        .padding()
 
-        Spacer()
-
-        List {
+            // Add buttons
             HStack {
-                Label("Expense:", systemImage: "dollarsign.bank.building")
-                Spacer()
-                Label("$0.00", systemImage: "dollarsign.circle")
+                Button("Add Expense") {
+                }
+                .buttonStyle(.bordered)
+                .background(Color.blue)
+                .foregroundColor(Color.white)
+                .shadow(color: Color.black.opacity(0.2), radius: 5)
+                .cornerRadius(15)
+                .sheet(isPresented: $showingPaycheckSheet) {
+                    PaycheckInputSheet(
+                        paycheck: $paycheck,
+                        isPresented: $showingPaycheckSheet
+                    )
+                }
             }
+            .padding(20)
         }
-
-        // Add buttons
-        HStack {
-            Button("Add Expense") {
-            }
-            .buttonStyle(.bordered)
-            .background(Color.blue)
-            .foregroundColor(Color.white)
-            .shadow(color: Color.black.opacity(0.2), radius: 5)
-            .cornerRadius(15)
-            .sheet(isPresented: $showingPaycheckSheet) {
-                PaycheckInputSheet(
-                    paycheck: $paycheck,
-                    isPresented: $showingPaycheckSheet
-                )
-            }
-        }
-        .padding(20)
     }
 }
 
