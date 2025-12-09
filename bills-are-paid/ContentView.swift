@@ -7,128 +7,168 @@
 
 import SwiftUI
 
-// Out of scope \\
+// MARK: - Data Model (move outside ContentView)
+struct Expense: Identifiable {
+    let id = UUID()
+    var name: String
+    var amount: Double
+}
 
+// MARK: - Main View
 struct ContentView: View {
-
-    // In scope \\
-    @State private var paycheck: Double = 0  // Add this
+    @State private var paycheck: Double = 0
+    @State private var expenses: [Expense] = []
     @State private var showingPaycheckSheet = false
-    @State private var paycheckInput = ""
-    @State private var expensesTotal: Double = 0
-    @State private var expensesName: String = ""
-    @State private var expenses: [Any] = []
-    @State private var isOverOrUnder: Double = 0
+    @State private var showingAddExpenseSheet = false
+
+    // Computed values
+    private var totalExpenses: Double {
+        expenses.reduce(0) { $0 + $1.amount }
+    }
+
+    private var overUnder: Double {
+        paycheck - totalExpenses
+    }
 
     var body: some View {
-
-        VStack {
-            // Label/Header
-            ZStack {
-                Label("Paycheck planner", systemImage: "creditcard.circle")
-                    .font(Font.largeTitle)
-                    .foregroundColor(Color.blue)
-            }
-            .padding()
-
-            // Paycheck area
-            HStack {
-                VStack(alignment: .leading) {
-                    // Returns paycheck
-                    Text("Paycheck: \(paycheck)")
-                        .font(.system(size: 18))
-                    // Returns whats left or is negative
-                    Text("Over / Under: \(isOverOrUnder)")
-                        .font(.system(size: 14))
-
+        NavigationStack {
+            VStack {
+                // Header
+//                Label("Paycheck planner", systemImage: "checkmark.app")
+//                    .font(.largeTitle.bold())
+//                    .foregroundColor(.blue)
+//                    .padding()
+//
+                // Paycheck summary
+                HStack {
+                    VStack(alignment: .leading) {
+                        Label(
+                            "Paycheck: \(paycheck, format: .currency(code: "USD"))",
+                            systemImage: "dollarsign.circle"
+                        )
+                        Label(
+                            "Over / Under: \(overUnder, format: .currency(code: "USD"))",
+                            systemImage: overUnder >= 0
+                                ? "checkmark.circle" : "exclamationmark.circle"
+                        )
+                        .foregroundColor(overUnder >= 0 ? .green : .red)
+                    }
+                    Spacer()
+                    Button("Add Paycheck") { showingPaycheckSheet = true }
+                        .buttonStyle(.borderedProminent)
+                        .cornerRadius(25)
                 }
+                .padding()
 
                 Spacer()
 
-                Button(action: {
-                    // Code to execute when button is pressed.
-                    showingPaycheckSheet = true
-                }) {
-                    Text("Add Paycheck")
+                // Dynamic Expense List
+                List {
+                    ForEach(expenses) { expense in
+                        HStack {
+                            Label(
+                                expense.name,
+                                systemImage: "dollarsign.bank.building"
+                            )
+                            Spacer()
+                            Text(expense.amount, format: .currency(code: "USD"))
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 8)
+                    }
+                    .onDelete { expenses.remove(atOffsets: $0) }
                 }
-                .buttonStyle(.bordered)
-                .background(Color.blue)
-                .foregroundColor(Color.white)
-                .cornerRadius(15)
-            }
-            .padding()
-            .glassEffect(in: .rect(cornerRadius: 18))
+                .cornerRadius(25)
+                .listStyle(.inset)
 
-            Spacer()
-
-            List {
-                HStack {
-                    Label("Expense:", systemImage: "dollarsign.bank.building")
-                    Spacer()
-                    Label("$0.00", systemImage: "dollarsign.circle")
-                }
-            }
-
-            // Add buttons
-            HStack {
+                // Add Expense Button
                 Button("Add Expense") {
+                    showingAddExpenseSheet = true
                 }
-                .buttonStyle(.bordered)
-                .background(Color.blue)
-                .foregroundColor(Color.white)
-                .shadow(color: Color.black.opacity(0.2), radius: 5)
-                .cornerRadius(15)
-                .sheet(isPresented: $showingPaycheckSheet) {
-                    PaycheckInputSheet(
-                        paycheck: $paycheck,
-                        isPresented: $showingPaycheckSheet
-                    )
+                .buttonStyle(.borderedProminent)
+                .cornerRadius(25)
+                .frame(width: 200, height: 60)
+                .padding()
+            }
+            .navigationTitle("Paycheck Planner")
+
+            // MARK: - Sheets (correctly placed here)
+            .sheet(isPresented: $showingPaycheckSheet) {
+                PaycheckInputSheet(paycheck: $paycheck)
+            }
+            .sheet(isPresented: $showingAddExpenseSheet) {
+                AddExpenseView { newExpense in
+                    expenses.append(newExpense)
                 }
             }
-            .padding(20)
+        }
+    }
+}
+
+// MARK: - Add Expense Sheet
+struct AddExpenseView: View {
+    @Environment(\.dismiss) var dismiss
+    @State private var name = ""
+    @State private var amount = ""
+
+    var onSave: (Expense) -> Void
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                TextField("Expense name (e.g. Rent)", text: $name)
+                TextField("Amount", text: $amount)
+                    .keyboardType(.decimalPad)
+            }
+            .navigationTitle("New Expense")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        if let amt = Double(amount), !name.isEmpty {
+                            onSave(Expense(name: name, amount: amt))
+                            dismiss()
+                        }
+                    }
+                    .disabled(name.isEmpty || Double(amount) == nil)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Paycheck Sheet (slightly cleaned up)
+struct PaycheckInputSheet: View {
+    @Binding var paycheck: Double
+    @Environment(\.dismiss) var dismiss
+    @State private var inputText = ""
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                TextField("Paycheck amount", text: $inputText)
+                    .keyboardType(.decimalPad)
+            }
+            .navigationTitle("Add Paycheck")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        if let value = Double(inputText) {
+                            paycheck = value
+                        }
+                        dismiss()
+                    }
+                }
+            }
         }
     }
 }
 
 #Preview {
     ContentView()
-}
-
-// Add this new view outside of ContentView
-struct PaycheckInputSheet: View {
-    @Binding var paycheck: Double
-    @Binding var isPresented: Bool
-    @State private var inputText = ""
-    @FocusState private var isInputFocused: Bool
-
-    var body: some View {
-        NavigationView {
-            Form {
-                Section("Enter Paycheck Amount") {
-                    TextField("Amount", text: $inputText)
-                        .keyboardType(.decimalPad)
-                        .focused($isInputFocused)
-                }
-            }
-            .navigationTitle("Add Paycheck")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        isPresented = false
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        if let amount = Double(inputText) {
-                            paycheck = amount
-                        }
-                        isPresented = false
-                    }
-                }
-            }
-            .onAppear {
-                isInputFocused = true
-            }
-        }
-    }
 }
