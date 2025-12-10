@@ -16,6 +16,7 @@ struct Expense: Identifiable {
 
 // MARK: - Main View
 struct ContentView: View {
+
     @State private var paycheck: Double = 0
     @State private var expenses: [Expense] = []
     @State private var showingPaycheckSheet = false
@@ -31,14 +32,33 @@ struct ContentView: View {
     }
 
     var body: some View {
+
         NavigationStack {
             VStack {
-                // Header
-//                Label("Paycheck planner", systemImage: "checkmark.app")
-//                    .font(.largeTitle.bold())
-//                    .foregroundColor(.blue)
-//                    .padding()
-//
+                // Inside the top header VStack, add this line:
+                VStack(spacing: 16) {
+                    HStack {
+                        Label("Paycheck planner", systemImage: "checkmark.app")
+                            .font(Font.largeTitle.bold())
+                            .fontWidth(.condensed)
+                            .foregroundColor(.blue)
+
+                        Spacer()
+
+                        NavigationLink {
+                            SettingsView()
+                        } label: {
+                            Image(systemName: "gearshape.fill")
+                                .font(.title2)
+                                .padding(8)
+                                .background(Circle().fill(Color(.systemGray5)))
+                        }
+                    }
+                    .padding(.horizontal)
+
+                    // ... rest of your header ...
+                }
+
                 // Paycheck summary
                 HStack {
                     VStack(alignment: .leading) {
@@ -90,7 +110,6 @@ struct ContentView: View {
                 .frame(width: 200, height: 60)
                 .padding()
             }
-            .navigationTitle("Paycheck Planner")
 
             // MARK: - Sheets (correctly placed here)
             .sheet(isPresented: $showingPaycheckSheet) {
@@ -172,3 +191,47 @@ struct PaycheckInputSheet: View {
 #Preview {
     ContentView()
 }
+
+// MARK: - Settings Screen
+struct SettingsView: View {
+    @AppStorage("currencyCode") private var currencyCode = "USD"
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Appearance") {
+                    Picker("Currency", selection: $currencyCode) {
+                        Text("US Dollar ($)").tag("USD")
+                        Text("Euro (€)").tag("EUR")
+                        Text("British Pound (£)").tag("GBP")
+                        Text("Japanese Yen (¥)").tag("JPY")
+                    }
+                }
+
+                Section("Data") {
+                    Button("Clear All Expenses") {
+                        // We'll connect this later
+                    }
+                    .foregroundColor(.red)
+                }
+
+                Section("About") {
+                    HStack {
+                        Text("Version: Alpha-0.1")
+                        Spacer()
+                        Text("1.0")
+                            .foregroundColor(.secondary)
+                    }
+                    HStack {
+                        Text("Made by: NullXee")
+                        Spacer()
+                        Text("You")
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            .navigationTitle("Settings")
+        }
+    }
+}
+
