@@ -33,6 +33,7 @@ struct ContentView: View {
 
     var body: some View {
 
+        // MARK: NavStack
         NavigationStack {
             VStack {
                 // Inside the top header VStack, add this line:
@@ -100,7 +101,9 @@ struct ContentView: View {
                 }
                 .cornerRadius(25)
                 .listStyle(.inset)
-
+                .shadow(radius: 10)
+                
+                
                 // Add Expense Button
                 Button("Add Expense") {
                     showingAddExpenseSheet = true
