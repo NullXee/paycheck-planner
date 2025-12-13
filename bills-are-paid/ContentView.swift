@@ -5,6 +5,9 @@
 //  Created by NullDev on 12/5/25.
 //
 
+// persistence
+import SwiftData
+// UI editing
 import SwiftUI
 
 // MARK: - Data Model (move outside ContentView)
@@ -12,6 +15,7 @@ struct Expense: Identifiable {
     let id = UUID()
     var name: String
     var amount: Double
+    var isPaid: Bool = false
 }
 
 // MARK: - Main View
@@ -83,27 +87,50 @@ struct ContentView: View {
 
                 Spacer()
 
+                // MARK: List display with check box when paid expense.
+
                 // Dynamic Expense List
                 List {
-                    ForEach(expenses) { expense in
+                    ForEach(expenses.indices, id: \.self) { index in  // Use indices for .onDelete compatibility
                         HStack {
-                            Label(
-                                expense.name,
-                                systemImage: "dollarsign.bank.building"
-                            )
+                            // Custom label with icon and name (to allow strikethrough on name)
+                            HStack {
+                                Image(systemName: "dollarsign.bank.building")  // Your icon
+                                Text(expenses[index].name)
+                                    .strikethrough(expenses[index].isPaid)  // Strikethrough when paid
+                                    .foregroundStyle(expenses[index].isPaid ? .gray : .primary)  // Gray when paid
+                            }
+                            
                             Spacer()
-                            Text(expense.amount, format: .currency(code: "USD"))
-                                .foregroundColor(.secondary)
+                            
+                            Text(expenses[index].amount, format: .currency(code: "USD"))
+                                .strikethrough(expenses[index].isPaid)  // Strikethrough when paid
+                                .foregroundStyle(expenses[index].isPaid ? .gray : .secondary)  // Gray when paid; .secondary for unpaid to match original
+                            
+                            // Checkbox button
+                            Button(action: {
+                                expenses[index].isPaid.toggle()  // Toggle paid status
+                            }, label: {
+                                Image(systemName: expenses[index].isPaid ? "checkmark.square.fill" : "square")
+                            })
+                            .buttonStyle(.plain)  // No background or border
+                            .foregroundStyle(.blue)
+                            .font(.system(size: 16))  // Fixed syntax; optional size adjustment
                         }
                         .padding(.vertical, 8)
                     }
                     .onDelete { expenses.remove(atOffsets: $0) }
                 }
                 .cornerRadius(25)
+                .padding(20)
                 .listStyle(.inset)
-                .shadow(radius: 10)
-                
-                
+                .shadow(
+                    color: .gray,
+                    radius: 3,
+                    x: 2,
+                    y: 4
+                )
+
                 // Add Expense Button
                 Button("Add Expense") {
                     showingAddExpenseSheet = true
@@ -220,7 +247,7 @@ struct SettingsView: View {
 
                 Section("About") {
                     HStack {
-                        Text("Version: Alpha-0.1")
+                        Text("Version: Alpha-1.0")
                         Spacer()
                         Text("1.0")
                             .foregroundColor(.secondary)
@@ -237,4 +264,3 @@ struct SettingsView: View {
         }
     }
 }
-
