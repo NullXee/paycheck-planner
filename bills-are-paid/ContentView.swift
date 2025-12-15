@@ -7,12 +7,12 @@
 
 // persistence
 import SwiftData
-// UI editing
+// UI
 import SwiftUI
 
 // MARK: - Data Model (move outside ContentView)
-struct Expense: Identifiable {
-    let id = UUID()
+struct Expense: Identifiable, Codable, Equatable {
+    var id: UUID = UUID()
     var name: String
     var amount: Double
     var isPaid: Bool = false
@@ -25,6 +25,34 @@ struct ContentView: View {
     @State private var expenses: [Expense] = []
     @State private var showingPaycheckSheet = false
     @State private var showingAddExpenseSheet = false
+
+    @AppStorage("expensesData") private var expensesData: Data = Data()
+
+    @AppStorage("appTheme") private var appTheme = "system"  // "system", "light", "dark"
+
+    private var selectedColorScheme: ColorScheme? {
+        switch appTheme {
+        case "light": return .light
+        case "dark": return .dark
+        default: return nil  // system
+        }
+    }
+
+    private func loadExpenses() {
+        guard !expensesData.isEmpty else { return }
+        if let decoded = try? JSONDecoder().decode(
+            [Expense].self,
+            from: expensesData
+        ) {
+            expenses = decoded
+        }
+    }
+
+    private func saveExpenses() {
+        if let data = try? JSONEncoder().encode(expenses) {
+            expensesData = data
+        }
+    }
 
     // Computed values
     private var totalExpenses: Double {
@@ -40,7 +68,6 @@ struct ContentView: View {
         // MARK: NavStack
         NavigationStack {
             VStack {
-                // Inside the top header VStack, add this line:
                 VStack(spacing: 16) {
                     HStack {
                         Label("Paycheck planner", systemImage: "checkmark.app")
@@ -50,18 +77,9 @@ struct ContentView: View {
 
                         Spacer()
 
-                        NavigationLink {
-                            SettingsView()
-                        } label: {
-                            Image(systemName: "gearshape.fill")
-                                .font(.title2)
-                                .padding(8)
-                                .background(Circle().fill(Color(.systemGray5)))
-                        }
                     }
                     .padding(.horizontal)
 
-                    // ... rest of your header ...
                 }
 
                 // Paycheck summary
@@ -79,9 +97,15 @@ struct ContentView: View {
                         .foregroundColor(overUnder >= 0 ? .green : .red)
                     }
                     Spacer()
-                    Button("Add Paycheck") { showingPaycheckSheet = true }
-                        .buttonStyle(.borderedProminent)
-                        .cornerRadius(25)
+                    HStack(spacing: 8) {
+                        Button("Paycheck") { showingPaycheckSheet = true }
+                            .buttonStyle(.borderedProminent)
+                            .cornerRadius(25)
+
+                        Button("Clear") { paycheck = 0 }
+                            .buttonStyle(.bordered)
+                            .cornerRadius(25)
+                    }
                 }
                 .padding()
 
@@ -98,21 +122,35 @@ struct ContentView: View {
                                 Image(systemName: "dollarsign.bank.building")  // Your icon
                                 Text(expenses[index].name)
                                     .strikethrough(expenses[index].isPaid)  // Strikethrough when paid
-                                    .foregroundStyle(expenses[index].isPaid ? .gray : .primary)  // Gray when paid
+                                    .foregroundStyle(
+                                        expenses[index].isPaid
+                                            ? .gray : .primary
+                                    )  // Gray when paid
                             }
-                            
+
                             Spacer()
-                            
-                            Text(expenses[index].amount, format: .currency(code: "USD"))
-                                .strikethrough(expenses[index].isPaid)  // Strikethrough when paid
-                                .foregroundStyle(expenses[index].isPaid ? .gray : .secondary)  // Gray when paid; .secondary for unpaid to match original
-                            
+
+                            Text(
+                                expenses[index].amount,
+                                format: .currency(code: "USD")
+                            )
+                            .strikethrough(expenses[index].isPaid)  // Strikethrough when paid
+                            .foregroundStyle(
+                                expenses[index].isPaid ? .gray : .secondary
+                            )  // Gray when paid; .secondary for unpaid to match original
+
                             // Checkbox button
-                            Button(action: {
-                                expenses[index].isPaid.toggle()  // Toggle paid status
-                            }, label: {
-                                Image(systemName: expenses[index].isPaid ? "checkmark.square.fill" : "square")
-                            })
+                            Button(
+                                action: {
+                                    expenses[index].isPaid.toggle()  // Toggle paid status
+                                },
+                                label: {
+                                    Image(
+                                        systemName: expenses[index].isPaid
+                                            ? "checkmark.square.fill" : "square"
+                                    )
+                                }
+                            )
                             .buttonStyle(.plain)  // No background or border
                             .foregroundStyle(.blue)
                             .font(.system(size: 16))  // Fixed syntax; optional size adjustment
@@ -131,16 +169,29 @@ struct ContentView: View {
                     y: 4
                 )
 
-                // Add Expense Button
-                Button("Add Expense") {
-                    showingAddExpenseSheet = true
+                // MARK: Lower buttons
+                HStack {
+                    // Add Expense Button
+                    Button("Add Expense") {
+                        showingAddExpenseSheet = true
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .cornerRadius(25)
+                    .frame(width: 200, height: 60)
+                    
+                    Spacer()
+                    
+                    // MARK: menu settings
+                    NavigationLink {
+                        SettingsView()
+                    } label: {
+                        Image(systemName: "gearshape.fill")
+                            .font(.title2)
+                            .padding(8)
+                            .background(Circle().fill(Color(.systemGray5)))
+                    }
                 }
-                .buttonStyle(.borderedProminent)
-                .cornerRadius(25)
-                .frame(width: 200, height: 60)
-                .padding()
             }
-
             // MARK: - Sheets (correctly placed here)
             .sheet(isPresented: $showingPaycheckSheet) {
                 PaycheckInputSheet(paycheck: $paycheck)
@@ -150,7 +201,12 @@ struct ContentView: View {
                     expenses.append(newExpense)
                 }
             }
+            .onAppear { loadExpenses() }
+            .onChange(of: expenses) { oldValue, newValue in
+                saveExpenses()
+            }
         }
+        .preferredColorScheme(selectedColorScheme)
     }
 }
 
@@ -225,6 +281,7 @@ struct PaycheckInputSheet: View {
 // MARK: - Settings Screen
 struct SettingsView: View {
     @AppStorage("currencyCode") private var currencyCode = "USD"
+    @AppStorage("appTheme") private var appTheme = "system"
 
     var body: some View {
         NavigationStack {
@@ -236,14 +293,19 @@ struct SettingsView: View {
                         Text("British Pound (£)").tag("GBP")
                         Text("Japanese Yen (¥)").tag("JPY")
                     }
+                    Picker("Appearance", selection: $appTheme) {
+                        Text("System").tag("system")
+                        Text("Light").tag("light")
+                        Text("Dark").tag("dark")
+                    }
                 }
 
-                Section("Data") {
-                    Button("Clear All Expenses") {
-                        // We'll connect this later
-                    }
-                    .foregroundColor(.red)
-                }
+//                Section("Data") {
+//                    Button("Clear All Expenses") {
+//                        // We'll connect this later
+//                    }
+//                    .foregroundColor(.red)
+//                }
 
                 Section("About") {
                     HStack {
