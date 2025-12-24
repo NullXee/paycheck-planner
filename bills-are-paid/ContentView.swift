@@ -118,7 +118,7 @@ struct ContentView: View {
 
                             HStack(spacing: 12) {
                                 SummaryCard(title: "Paycheck", value: paycheck, currencyCode: currencyCode, symbol: "dollarsign.circle.fill", tint: .blue)
-                                SummaryCard(title: "Over/Under", value: overUnder, currencyCode: currencyCode, symbol: overUnder >= 0 ? "checkmark.circle.fill" : "exclamationmark.circle.fill", tint: overUnder >= 0 ? .green : .red)
+                                SummaryCard(title: "Positive/Negative", value: overUnder, currencyCode: currencyCode, symbol: overUnder >= 0 ? "checkmark.circle.fill" : "exclamationmark.circle.fill", tint: overUnder >= 0 ? .green : .red)
                             }
                         }
                         .padding(.horizontal)
@@ -129,7 +129,7 @@ struct ContentView: View {
                             Button {
                                 showingPaycheckSheet = true
                             } label: {
-                                Label("Set Paycheck", systemImage: "square.and.pencil")
+                                Label("Paycheck", systemImage: "square.and.pencil")
                                     .frame(maxWidth: .infinity)
                             }
                             .buttonStyle(.borderedProminent)
