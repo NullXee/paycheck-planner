@@ -111,14 +111,14 @@ struct ContentView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         // Header
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Paycheck Planner")
+                            Text("Overview")
                                 .font(.largeTitle.bold())
                                 .foregroundStyle(LinearGradient(colors: [.blue, .purple], startPoint: .leading, endPoint: .trailing))
                                 .padding(.bottom, 4)
 
                             HStack(spacing: 12) {
                                 SummaryCard(title: "Paycheck", value: paycheck, currencyCode: currencyCode, symbol: "dollarsign.circle.fill", tint: .blue)
-                                SummaryCard(title: "Positive/Negative", value: overUnder, currencyCode: currencyCode, symbol: overUnder >= 0 ? "checkmark.circle.fill" : "exclamationmark.circle.fill", tint: overUnder >= 0 ? .green : .red)
+                                SummaryCard(title: "P / N", value: overUnder, currencyCode: currencyCode, symbol: overUnder >= 0 ? "checkmark.circle.fill" : "exclamationmark.circle.fill", tint: overUnder >= 0 ? .green : .red)
                             }
                         }
                         .padding(.horizontal)
@@ -262,7 +262,7 @@ struct ContentView: View {
                 .padding()
                 .accessibilityLabel("Add Expense")
             }
-            .navigationTitle("Overview")
+            .navigationTitle("Paycheck Planner")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
